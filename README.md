@@ -2,6 +2,9 @@
 
 ### Simply private/public IP check
 
+## Before use this,
+If you wnat check through the Web Browser, please visit [IPbyNet](https://ipby.net) website and easily check your public IP. 
+
 ## 1. Support OS
 - macOS 
 - Linux
@@ -32,5 +35,6 @@ go build ipby.go
 
 ## 4. OpenSource
 This is MIT License.
-Public IP searched by [ipify](https://www.ipify.org/).
-Private IP searched on ipconfig for macOS and hostname for Linux.
+- Public IP used by [ipify](https://www.ipify.org/). It checked your `x-forwarded-for` value.
+- Private IP used `ipconfig` tool for macOS, `hostname` tool for Linux and `ipconfig` tool for Windows.
+It included in each Operating Systems.
