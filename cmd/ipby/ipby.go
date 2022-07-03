@@ -92,7 +92,11 @@ func getPrvIPMacFull() {
 func getPrvIPLinux() {
 	prvip := exec.Command(iflinux, iflinux_opt)
 	prvipAddr, _ := prvip.Output()
-	fmt.Print(lstdot + "IP Address: " + string(prvipAddr))
+	if len(prvipAddr) == 0 {
+		fmt.Println(lstdot + offline)
+	} else {
+		fmt.Print(lstdot + "IP Address: " + string(prvipAddr))
+	}
 }
 
 //func getPrvIPWIndows() {
