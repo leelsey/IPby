@@ -13,27 +13,27 @@ import (
 )
 
 var (
-	appver     = "0.1"
-	lstdot     = "  • "
-	titlefnt   = color.New(color.FgGreen, color.Bold)
-	prvipt     = "Private IP"
-	pubipt     = "Public IP"
-	offline    = "Network is turned off"
-	disconnet  = "Internet disconnected"
-	ifmac      = "ipconfig" // Private IP for macOS
-	netwifi    = "en0"
-	netwire    = "en5"
-	ifaddr     = "getifaddr"
-	getoption  = "getoption"
-	subnetmask = "subnet_mask"
-	router     = "router"
-	iflinux    = "hostname" // Private IP for Linux
-	iflinuxopt = "-I"
+	appver           = "0.1"
+	lstdot           = "  • "
+	titlefnt         = color.New(color.FgGreen, color.Bold)
+	prvipt           = "Private IP"
+	pubipt           = "Public IP"
+	offline          = "Network is turned off"
+	disconnet        = "Internet disconnected"
+	ifmac            = "ipconfig" // Private IP for macOS
+	ifmac_netwifi    = "en0"
+	ifmac_netwire    = "en5"
+	ifmac_ifaddr     = "getifaddr"
+	ifmac_getoption  = "getoption"
+	ifmac_subnetmask = "subnet_mask"
+	ifmac_router     = "router"
+	iflinux          = "hostname" // Private IP for Linux
+	iflinux_opt      = "-I"
 )
 
 func getPrvIPMacSimple() {
-	prvIPWiFi := exec.Command(ifmac, ifaddr, netwifi)
-	prvIPWire := exec.Command(ifmac, ifaddr, netwire)
+	prvIPWiFi := exec.Command(ifmac, ifmac_ifaddr, ifmac_netwifi)
+	prvIPWire := exec.Command(ifmac, ifmac_ifaddr, ifmac_netwire)
 	prvIPWiFiAddr, _ := prvIPWiFi.Output()
 	prvIPWireAddr, _ := prvIPWire.Output()
 	if len(prvIPWiFiAddr) == 0 && len(prvIPWireAddr) == 0 {
@@ -53,12 +53,12 @@ func getPrvIPMacSimple() {
 }
 
 func getPrvIPMacFull() {
-	prvIPWiFi := exec.Command(ifmac, ifaddr, netwifi)
-	prvIPWire := exec.Command(ifmac, ifaddr, netwire)
-	netMskWiFi := exec.Command(ifmac, getoption, netwifi, subnetmask)
-	netMskWire := exec.Command(ifmac, getoption, netwire, subnetmask)
-	routerWiFi := exec.Command(ifmac, getoption, netwifi, router)
-	routerWire := exec.Command(ifmac, getoption, netwire, router)
+	prvIPWiFi := exec.Command(ifmac, ifmac_ifaddr, ifmac_netwifi)
+	prvIPWire := exec.Command(ifmac, ifmac_ifaddr, ifmac_netwire)
+	netMskWiFi := exec.Command(ifmac, ifmac_getoption, ifmac_netwifi, ifmac_subnetmask)
+	netMskWire := exec.Command(ifmac, ifmac_getoption, ifmac_netwire, ifmac_subnetmask)
+	routerWiFi := exec.Command(ifmac, ifmac_getoption, ifmac_netwifi, ifmac_router)
+	routerWire := exec.Command(ifmac, ifmac_getoption, ifmac_netwire, ifmac_router)
 	prvIPWiFiAddr, _ := prvIPWiFi.Output()
 	prvIPWireAddr, _ := prvIPWire.Output()
 	netmskWiFiAddr, _ := netMskWiFi.Output()
@@ -90,7 +90,7 @@ func getPrvIPMacFull() {
 }
 
 func getPrvIPLinux() {
-	prvip := exec.Command(iflinux, iflinuxopt)
+	prvip := exec.Command(iflinux, iflinux_opt)
 	prvipAddr, _ := prvip.Output()
 	fmt.Print(lstdot + "IP Address: " + string(prvipAddr))
 }
