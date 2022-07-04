@@ -4,31 +4,38 @@ import (
 	"flag"
 	"fmt"
 	"github.com/fatih/color"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 )
 
 var (
-	appver           = "0.1"
-	lstdot           = "  • "
-	titlefnt         = color.New(color.FgGreen, color.Bold)
-	prvipt           = "Private IP"
-	pubipt           = "Public IP"
-	offline          = "Network is turned off"
-	disconnet        = "Internet disconnected"
-	ifmac            = "ipconfig" // Private IP for macOS
-	ifmac_netwifi    = "en0"
-	ifmac_netwire    = "en5"
-	ifmac_ifaddr     = "getifaddr"
-	ifmac_getoption  = "getoption"
-	ifmac_subnetmask = "subnet_mask"
-	ifmac_router     = "router"
-	iflinux          = "hostname" // Private IP for Linux
-	iflinux_opt      = "-I"
+	appver    = "0.1"
+	lstdot    = "  • "
+	titlefnt  = color.New(color.FgGreen, color.Bold)
+	prvipt    = "Private IP"
+	pubipt    = "Public IP"
+	offline   = "Network is turned off"
+	disconnet = "Internet disconnected"
+	// Network interface for each OS
+	ifmac         = "ipconfig"
+	ifmac_netwifi = "en0"
+	ifmac_netwire = "en5"
+	ifmac_ifaddr  = "getifaddr"
+	ifmac_getopt  = "getoption"
+	ifmac_sbw     = "subnet_mask"
+	ifmac_router  = "router"
+	iflinux       = "hostname"
+	iflinux_opt   = "-I"
+	ifwin         = "ipconfig"
+	ifwin_opt     = "findstr"
+	ifwin_ipv4    = "IPv4"
+	ifwin_ipv6    = "IPv6"
 )
 
 func getPrvIPMacSimple() {
@@ -55,10 +62,10 @@ func getPrvIPMacSimple() {
 func getPrvIPMacFull() {
 	prvIPWiFi := exec.Command(ifmac, ifmac_ifaddr, ifmac_netwifi)
 	prvIPWire := exec.Command(ifmac, ifmac_ifaddr, ifmac_netwire)
-	netMskWiFi := exec.Command(ifmac, ifmac_getoption, ifmac_netwifi, ifmac_subnetmask)
-	netMskWire := exec.Command(ifmac, ifmac_getoption, ifmac_netwire, ifmac_subnetmask)
-	routerWiFi := exec.Command(ifmac, ifmac_getoption, ifmac_netwifi, ifmac_router)
-	routerWire := exec.Command(ifmac, ifmac_getoption, ifmac_netwire, ifmac_router)
+	netMskWiFi := exec.Command(ifmac, ifmac_getopt, ifmac_netwifi, ifmac_sbw)
+	netMskWire := exec.Command(ifmac, ifmac_getopt, ifmac_netwire, ifmac_sbw)
+	routerWiFi := exec.Command(ifmac, ifmac_getopt, ifmac_netwifi, ifmac_router)
+	routerWire := exec.Command(ifmac, ifmac_getopt, ifmac_netwire, ifmac_router)
 	prvIPWiFiAddr, _ := prvIPWiFi.Output()
 	prvIPWireAddr, _ := prvIPWire.Output()
 	netmskWiFiAddr, _ := netMskWiFi.Output()
@@ -99,9 +106,39 @@ func getPrvIPLinux() {
 	}
 }
 
-//func getPrvIPWIndows() {
-//	return
-//}
+func getPrvIPWIndows() {
+	var psList []*exec.Cmd
+	psList = append(psList, exec.Command("powershell", "/C", ifwin))
+	psList = append(psList, exec.Command("powershell", "/C", "$Input | ", ifwin_opt, ifwin_ipv4))
+	var prvip []byte
+	for i, s := range psList {
+		if i > 0 {
+			input, err := s.StdinPipe()
+			if err != nil {
+				panic(err)
+			}
+			go func(write io.WriteCloser, data []byte) {
+				write.Write(data)
+				write.Close()
+			}(input, prvip)
+		}
+		var err error
+		prvip, err = s.CombinedOutput()
+		if err != nil {
+			panic(err)
+		}
+	}
+	prvipList := strings.Split(string(prvip), ":")
+	if len(prvipList) == 0 {
+		fmt.Println(lstdot + offline)
+	} else {
+		for listnum, prvipAddr := range prvipList {
+			if listnum >= 1 {
+				fmt.Println(lstdot + "IP Address: " + prvipAddr[1:15])
+			}
+		}
+	}
+}
 
 func getPubIP() string {
 	ipv4, _ := http.Get("https://api.ipify.org")
@@ -154,6 +191,8 @@ func main() {
 			getPrvIPMacSimple()
 		case "linux":
 			getPrvIPLinux()
+		case "windows":
+			getPrvIPWIndows()
 		}
 		titlefnt.Println(pubipt)
 		if checkNetStatus() == true {
@@ -174,6 +213,8 @@ func main() {
 				getPrvIPMacFull()
 			case "linux":
 				getPrvIPLinux()
+			case "windows":
+				getPrvIPWIndows()
 			}
 			titlefnt.Println(pubipt)
 			pubIPAll()
@@ -189,6 +230,8 @@ func main() {
 				getPrvIPMacFull()
 			case "linux":
 				getPrvIPLinux()
+			case "windows":
+				getPrvIPWIndows()
 			}
 		default:
 			fmt.Println(lstdot + "Usage: ipby <command>\n" +
