@@ -25,7 +25,7 @@ func checkError(err error) {
 
 var (
 	appVer        = "0.2"
-	appTitle      = clrPurple + "IPBy " + clrGrey + "v" + appVer + clrReset
+	appTitle      = clrPurple + "IPby " + clrGrey + "v" + appVer + clrReset
 	lstDot        = "  • "
 	prvIPTitle    = clrCyan + "Private IP" + clrReset
 	pubIPTitle    = clrCyan + "Public IP" + clrReset
