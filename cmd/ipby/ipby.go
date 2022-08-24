@@ -12,6 +12,17 @@ import (
 	"time"
 )
 
+func checkError(err error) {
+	defer func() {
+		if recv := recover(); recv != nil {
+			fmt.Println("\n"+lstDot, recv)
+		}
+	}()
+	if err != nil {
+		panic(clrRed + "Error >> " + err.Error())
+	}
+}
+
 var (
 	appVer        = "0.2"
 	appTitle      = clrPurple + "IPBy " + clrGrey + "v" + appVer + clrReset
@@ -20,6 +31,7 @@ var (
 	pubIPTitle    = clrCyan + "Public IP" + clrReset
 	wifiEthernet  = clrBlue + "- WiFi Ethernet" + clrReset
 	wiredEthernet = clrBlue + "- Wired Ethernet" + clrReset
+	msgIPAddress  = lstDot + clrGreen + "IP Address" + clrReset + ": "
 	msgNoSignal   = clrYellow + "No signal" + clrReset
 	msgOffline    = msgNoSignal + ": network is turned off."
 	msgDisconnet  = msgNoSignal + ": internet is disconnected."
@@ -49,7 +61,7 @@ var (
 )
 
 func checkNetStatus() bool {
-	getTimeout := time.Duration(10000 * time.Millisecond)
+	getTimeout := 10000 * time.Millisecond
 	client := http.Client{
 		Timeout: getTimeout,
 	}
@@ -69,15 +81,15 @@ func getPrvIPMacSimple() {
 		fmt.Println(lstDot + msgOffline)
 	} else if len(prvIPWireAddr) == 0 {
 		fmt.Println(wifiEthernet)
-		fmt.Print(lstDot + "IP Address: " + string(prvIPWiFiAddr))
+		fmt.Print(msgIPAddress + string(prvIPWiFiAddr))
 	} else if len(prvIPWiFiAddr) == 0 {
 		fmt.Println(wiredEthernet)
-		fmt.Print(lstDot + "IP Address: " + string(prvIPWireAddr))
+		fmt.Print(msgIPAddress + string(prvIPWireAddr))
 	} else {
 		fmt.Println(wifiEthernet)
-		fmt.Print(lstDot + "IP Address: " + string(prvIPWiFiAddr))
+		fmt.Print(msgIPAddress + string(prvIPWiFiAddr))
 		fmt.Println(wiredEthernet)
-		fmt.Print(lstDot + "IP Address: " + string(prvIPWireAddr))
+		fmt.Print(msgIPAddress + string(prvIPWireAddr))
 	}
 }
 
@@ -98,21 +110,21 @@ func getPrvIPMacFull() {
 		fmt.Println(lstDot + msgOffline)
 	} else if len(prvIPWireAddr) == 0 {
 		fmt.Println(wifiEthernet)
-		fmt.Print(lstDot + "IP Address: " + string(prvIPWiFiAddr) +
+		fmt.Print(msgIPAddress + string(prvIPWiFiAddr) +
 			lstDot + "Subnetwork: " + string(netmskWiFiAddr) +
 			lstDot + "Net Router: " + string(routerWiFiAddr))
 	} else if len(prvIPWiFiAddr) == 0 {
 		fmt.Println(wiredEthernet)
-		fmt.Print(lstDot + "IP Address: " + string(prvIPWireAddr) +
+		fmt.Print(msgIPAddress + string(prvIPWireAddr) +
 			lstDot + "Subnetwork: " + string(netmskWireAddr) +
 			lstDot + "Net Router: " + string(routerWireAddr))
 	} else {
 		fmt.Println(wifiEthernet)
-		fmt.Print(lstDot + "IP Address: " + string(prvIPWiFiAddr) +
+		fmt.Print(msgIPAddress + string(prvIPWiFiAddr) +
 			lstDot + "Subnetwork: " + string(netmskWiFiAddr) +
 			lstDot + "Net Router: " + string(routerWiFiAddr))
 		fmt.Println(wiredEthernet)
-		fmt.Print(lstDot + "IP Address: " + string(prvIPWireAddr) +
+		fmt.Print(msgIPAddress + string(prvIPWireAddr) +
 			lstDot + "Subnetwork: " + string(netmskWireAddr) +
 			lstDot + "Net Router: " + string(routerWireAddr))
 	}
@@ -124,7 +136,7 @@ func getPrvIPLinux() {
 	if len(prvipAddr) == 0 {
 		fmt.Println(lstDot + msgOffline)
 	} else {
-		fmt.Print(lstDot + "IP Address: " + string(prvipAddr))
+		fmt.Print(msgIPAddress + string(prvipAddr))
 	}
 }
 
@@ -136,19 +148,29 @@ func getPrvIPWIndows() {
 	for i, s := range psList {
 		if i > 0 {
 			input, err := s.StdinPipe()
-			if err != nil {
-				panic(err)
-			}
+			checkError(err)
+			//if err != nil {
+			//	panic(err)
+			//}
 			go func(write io.WriteCloser, data []byte) {
-				write.Write(data)
-				write.Close()
+				_, errWrtie := write.Write(data)
+				checkError(errWrtie)
+				//if err != nil {
+				//	return
+				//}
+				ereClose := write.Close()
+				checkError(ereClose)
+				//if err != nil {
+				//	return
+				//}
 			}(input, prvip)
 		}
 		var err error
 		prvip, err = s.CombinedOutput()
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
+		//if err != nil {
+		//	panic(err)
+		//}
 	}
 	prvipList := strings.Split(string(prvip), ":")
 	if len(prvipList) == 0 {
@@ -156,7 +178,7 @@ func getPrvIPWIndows() {
 	} else {
 		for listnum, prvipAddr := range prvipList {
 			if listnum >= 1 {
-				fmt.Println(lstDot + "IP Address: " + prvipAddr[1:15])
+				fmt.Println(msgIPAddress + prvipAddr[1:15])
 			}
 		}
 	}
@@ -176,10 +198,11 @@ func getPubIP64() string {
 
 func pubIPAll() {
 	if checkNetStatus() == true {
-		var pubipv4 string = getPubIP()
-		var pubipv6 string = getPubIP64()
+		var pubipv4 = getPubIP()
+		var pubipv6 = getPubIP64()
+
 		if pubipv4 == pubipv6 {
-			fmt.Println(lstDot + "IP Address: " + pubipv4)
+			fmt.Println(msgIPAddress + pubipv4)
 		} else {
 			fmt.Println(lstDot + "IP Address v4: " + pubipv4)
 			fmt.Println(lstDot + "IP Address v6: " + pubipv6)
@@ -206,17 +229,19 @@ func main() {
 		}
 		fmt.Println(pubIPTitle)
 		if checkNetStatus() == true {
-			fmt.Println(lstDot + "IP Address: " + getPubIP64())
+			fmt.Println(msgIPAddress + getPubIP64())
 		} else {
 			fmt.Println(lstDot + msgDisconnet)
 		}
 	} else {
 		switch os.Args[1] {
 		case "version":
-			verOpt.Parse(os.Args[1:])
+			err := verOpt.Parse(os.Args[1:])
+			checkError(err)
 			fmt.Println(appTitle)
 		case "all":
-			allOpt.Parse(os.Args[1:])
+			err := allOpt.Parse(os.Args[1:])
+			checkError(err)
 			fmt.Println(prvIPTitle)
 			switch runtime.GOOS {
 			case "darwin":
@@ -229,11 +254,13 @@ func main() {
 			fmt.Println(pubIPTitle)
 			pubIPAll()
 		case "public":
-			pubOpt.Parse(os.Args[1:])
+			err := pubOpt.Parse(os.Args[1:])
+			checkError(err)
 			fmt.Println(pubIPTitle)
 			pubIPAll()
 		case "private":
-			prvOpt.Parse(os.Args[1:])
+			err := prvOpt.Parse(os.Args[1:])
+			checkError(err)
 			fmt.Println(prvIPTitle)
 			switch runtime.GOOS {
 			case "darwin":
@@ -244,7 +271,8 @@ func main() {
 				getPrvIPWIndows()
 			}
 		case "help":
-			prvOpt.Parse(os.Args[1:])
+			err := prvOpt.Parse(os.Args[1:])
+			checkError(err)
 			fmt.Println(appTitle)
 			fmt.Println(lstDot + "Usage: ipby <command>\n" +
 				lstDot + "It can use in <command> that one of version, all, public, private")
