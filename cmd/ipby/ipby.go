@@ -34,13 +34,13 @@ var (
 	msgIPAddress  = lstDot + clrGreen + "IP Address" + clrReset + ": "
 	msgNoSignal   = clrYellow + "No signal" + clrReset
 	msgOffline    = msgNoSignal + ": network is turned off."
-	msgDisconnet  = msgNoSignal + ": internet is disconnected."
+	msgDisconnect = msgNoSignal + ": internet is disconnected."
 	macIF         = "ipconfig"
 	macIFWifi     = "en0"
 	macIFWired    = "en5"
 	macIFAddr     = "getifaddr"
 	macIFGetOpt   = "getoption"
-	macIFSBW      = "subnet_mask"
+	macIFSubMsk   = "subnet_mask"
 	macIFRouter   = "router"
 	linuxIF       = "hostname"
 	linuxIFOpt    = "-I"
@@ -96,14 +96,14 @@ func getPrvIPMacSimple() {
 func getPrvIPMacFull() {
 	prvIPWiFi := exec.Command(macIF, macIFAddr, macIFWifi)
 	prvIPWire := exec.Command(macIF, macIFAddr, macIFWired)
-	netMskWiFi := exec.Command(macIF, macIFGetOpt, macIFWifi, macIFSBW)
-	netMskWire := exec.Command(macIF, macIFGetOpt, macIFWired, macIFSBW)
+	netMskWiFi := exec.Command(macIF, macIFGetOpt, macIFWifi, macIFSubMsk)
+	netMskWire := exec.Command(macIF, macIFGetOpt, macIFWired, macIFSubMsk)
 	routerWiFi := exec.Command(macIF, macIFGetOpt, macIFWifi, macIFRouter)
 	routerWire := exec.Command(macIF, macIFGetOpt, macIFWired, macIFRouter)
 	prvIPWiFiAddr, _ := prvIPWiFi.Output()
 	prvIPWireAddr, _ := prvIPWire.Output()
-	netmskWiFiAddr, _ := netMskWiFi.Output()
-	netmskWireAddr, _ := netMskWire.Output()
+	netMskWiFiAddr, _ := netMskWiFi.Output()
+	netMskWireAddr, _ := netMskWire.Output()
 	routerWiFiAddr, _ := routerWiFi.Output()
 	routerWireAddr, _ := routerWire.Output()
 	if len(prvIPWiFiAddr) == 0 && len(prvIPWireAddr) == 0 {
@@ -111,40 +111,40 @@ func getPrvIPMacFull() {
 	} else if len(prvIPWireAddr) == 0 {
 		fmt.Println(wifiEthernet)
 		fmt.Print(msgIPAddress + string(prvIPWiFiAddr) +
-			lstDot + "Subnetwork: " + string(netmskWiFiAddr) +
+			lstDot + "Subnetwork: " + string(netMskWiFiAddr) +
 			lstDot + "Net Router: " + string(routerWiFiAddr))
 	} else if len(prvIPWiFiAddr) == 0 {
 		fmt.Println(wiredEthernet)
 		fmt.Print(msgIPAddress + string(prvIPWireAddr) +
-			lstDot + "Subnetwork: " + string(netmskWireAddr) +
+			lstDot + "Subnetwork: " + string(netMskWireAddr) +
 			lstDot + "Net Router: " + string(routerWireAddr))
 	} else {
 		fmt.Println(wifiEthernet)
 		fmt.Print(msgIPAddress + string(prvIPWiFiAddr) +
-			lstDot + "Subnetwork: " + string(netmskWiFiAddr) +
+			lstDot + "Subnetwork: " + string(netMskWiFiAddr) +
 			lstDot + "Net Router: " + string(routerWiFiAddr))
 		fmt.Println(wiredEthernet)
 		fmt.Print(msgIPAddress + string(prvIPWireAddr) +
-			lstDot + "Subnetwork: " + string(netmskWireAddr) +
+			lstDot + "Subnetwork: " + string(netMskWireAddr) +
 			lstDot + "Net Router: " + string(routerWireAddr))
 	}
 }
 
 func getPrvIPLinux() {
-	prvip := exec.Command(linuxIF, linuxIFOpt)
-	prvipAddr, _ := prvip.Output()
-	if len(prvipAddr) == 0 {
+	prvIP := exec.Command(linuxIF, linuxIFOpt)
+	prvIPAddr, _ := prvIP.Output()
+	if len(prvIPAddr) == 0 {
 		fmt.Println(lstDot + msgOffline)
 	} else {
-		fmt.Print(msgIPAddress + string(prvipAddr))
+		fmt.Print(msgIPAddress + string(prvIPAddr))
 	}
 }
 
-func getPrvIPWIndows() {
+func getPrvIPWindows() {
 	var psList []*exec.Cmd
 	psList = append(psList, exec.Command("powershell", "/C", winIF))
 	psList = append(psList, exec.Command("powershell", "/C", "$Input | ", winIFOpt, winIFIPv4))
-	var prvip []byte
+	var prvIP []byte
 	for i, s := range psList {
 		if i > 0 {
 			input, err := s.StdinPipe()
@@ -153,8 +153,8 @@ func getPrvIPWIndows() {
 			//	panic(err)
 			//}
 			go func(write io.WriteCloser, data []byte) {
-				_, errWrtie := write.Write(data)
-				checkError(errWrtie)
+				_, errWrite := write.Write(data)
+				checkError(errWrite)
 				//if err != nil {
 				//	return
 				//}
@@ -163,22 +163,22 @@ func getPrvIPWIndows() {
 				//if err != nil {
 				//	return
 				//}
-			}(input, prvip)
+			}(input, prvIP)
 		}
 		var err error
-		prvip, err = s.CombinedOutput()
+		prvIP, err = s.CombinedOutput()
 		checkError(err)
 		//if err != nil {
 		//	panic(err)
 		//}
 	}
-	prvipList := strings.Split(string(prvip), ":")
-	if len(prvipList) == 0 {
+	prvIPList := strings.Split(string(prvIP), ":")
+	if len(prvIPList) == 0 {
 		fmt.Println(lstDot + msgOffline)
 	} else {
-		for listnum, prvipAddr := range prvipList {
-			if listnum >= 1 {
-				fmt.Println(msgIPAddress + prvipAddr[1:15])
+		for listNum, prvIPAddr := range prvIPList {
+			if listNum >= 1 {
+				fmt.Println(msgIPAddress + prvIPAddr[1:15])
 			}
 		}
 	}
@@ -198,17 +198,17 @@ func getPubIP64() string {
 
 func pubIPAll() {
 	if checkNetStatus() == true {
-		var pubipv4 = getPubIP()
-		var pubipv6 = getPubIP64()
+		var pubIPv4 = getPubIP()
+		var pubIPv6 = getPubIP64()
 
-		if pubipv4 == pubipv6 {
-			fmt.Println(msgIPAddress + pubipv4)
+		if pubIPv4 == pubIPv6 {
+			fmt.Println(msgIPAddress + pubIPv4)
 		} else {
-			fmt.Println(lstDot + "IP Address v4: " + pubipv4)
-			fmt.Println(lstDot + "IP Address v6: " + pubipv6)
+			fmt.Println(lstDot + "IP Address v4: " + pubIPv4)
+			fmt.Println(lstDot + "IP Address v6: " + pubIPv6)
 		}
 	} else {
-		fmt.Println(lstDot + msgDisconnet)
+		fmt.Println(lstDot + msgDisconnect)
 	}
 }
 
@@ -225,13 +225,13 @@ func main() {
 		case "linux":
 			getPrvIPLinux()
 		case "windows":
-			getPrvIPWIndows()
+			getPrvIPWindows()
 		}
 		fmt.Println(pubIPTitle)
 		if checkNetStatus() == true {
 			fmt.Println(msgIPAddress + getPubIP64())
 		} else {
-			fmt.Println(lstDot + msgDisconnet)
+			fmt.Println(lstDot + msgDisconnect)
 		}
 	} else {
 		switch os.Args[1] {
@@ -249,7 +249,7 @@ func main() {
 			case "linux":
 				getPrvIPLinux()
 			case "windows":
-				getPrvIPWIndows()
+				getPrvIPWindows()
 			}
 			fmt.Println(pubIPTitle)
 			pubIPAll()
@@ -268,7 +268,7 @@ func main() {
 			case "linux":
 				getPrvIPLinux()
 			case "windows":
-				getPrvIPWIndows()
+				getPrvIPWindows()
 			}
 		case "help":
 			err := prvOpt.Parse(os.Args[1:])
